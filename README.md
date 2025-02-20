@@ -2,7 +2,7 @@
 
 ## 📌 Introduction
 
-LookingDev is a microservices-based application developed using the Spring framework. Its main purpose is to manage and get developers from platforms such as GitHub, StackOverflow. Quite basic information is collected, such as the user's name, his profile url, and a list of skills and also contains user management (receiving, deleting, etc.).  The application supports authorization using JWT. The Saga pattern and API Gateway were used for architectural solutions
+LookingDev is a microservices-based application developed using the Spring framework. Its main purpose is to manage and get developers from platforms such as GitHub, StackOverflow. Quite basic information is collected, such as the user's name, his profile url, and a list of skills and also contains user management (receiving, deleting, etc.).  The application supports authorization using JWT. The Saga pattern were used for architectural solutions
 
 The system consists of four main microservices:
 
