@@ -1,0 +1,102 @@
+version: '3.8'
+
+# Create network for App
+networks:
+  mynetwork:
+    name: mynetwork
+
+services:
+  # Container with RabbitMQ
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672" # port for message
+      - "15672:15672" # port for web UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mynetwork
+
+  # Container with postgres DB
+  gitdatabase:
+    image: postgres:16
+    container_name: gitdatabase
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: freshhuk
+      POSTGRES_DB: my_db
+    ports:
+      - "5432:5432"
+    networks:
+      - mynetwork
+
+  # Container for API Service
+  apiservice:
+    build:
+      context: ./LookingDev-API
+    container_name: apiservice
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - mynetwork
+
+  # Container for Git Service
+  gitservice:
+    build:
+      context: ./LookingDev-GitHub
+    container_name: gitservice
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_DATASOURCE_URL: jdbc:postgresql://gitdatabase:5432/my_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: freshhuk
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      gitdatabase:
+        condition: service_started
+      apiservice:
+        condition: service_started
+    networks:
+      - mynetwork
+
+  # Container for Stack Overflow Service
+  stackoverflowservice:
+    build:
+      context: ./LookingDev-StackOverflow
+    container_name: stackoverflowservice
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      apiservice:
+        condition: service_started
+    networks:
+      - mynetwork
